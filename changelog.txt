@@ -1,0 +1,56 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## 0.3.0b - 23-03-2021
+### Added
+- Added support to detect mac-randomisation
+- Added cross platform support (Linux, MacOS to be added)
+- Function to show currently connected SSID
+- Git added
+### Changed
+- Changed to python package
+- Changed dictionary item 'pw' to 'psk'
+- Fix for pyinstaller compiling with no console - need to pipe all STDIO from subprocesses
+
+
+## 0.2.1b - 11-09-2020
+### Added
+- Host information and date to generate wpa_supplicant files
+### Changed
+- fixed issue with wpa_supplicant files
+- fixed alert for location of generated wpa_supplicant
+- order wpa_supplicant to place open networks at the bottom of the file.
+
+
+## 0.2.1b - 11-09-2020
+### Added
+- Host information and date to generate wpa_supplicant files
+### Changed
+- fixed issue with wpa_supplicant files
+- fixed alert for location of generated wpa_supplicant
+- order wpa_supplicant to place open networks at the bottom of the file.
+
+
+## 0.2.0b - 14-03-2019
+### Added
+- added flag for metered connections
+- added command line flag for JSON export
+- added help information
+- show currently visible networks with flag
+- added option to show configured DNS settings
+- added all flag to do all of above
+- ability to generate wpa_supplicant.conf files
+- increased width of password column
+
+
+## 0.1.2b - 04-03-2019
+### Changed
+-code optimisation. Using dict comprehension
+
+
+## 0.1.0b - 10-02-2019
+### Added
+-Inital Release
