@@ -7,7 +7,7 @@
     Uses the netsh windows module. Pass --JSON argument to export as JSON.
     Pass --wpasupplicant to create a wpa_supplicant.conf file for linux
     Creation date: 10-02-2019
-    Modified date: 23-03-2021
+    Modified date: 24-03-2021
     Dependencies: colorama
 """
 __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
@@ -25,7 +25,7 @@ __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see < https: // www.gnu.org/licenses/>.
 
-__version__ = "0.3.1-beta"
+__version__ = "0.3.2-beta"
 __licence__ = "GPLv3"  # GNU General Public Licence v3
 
 import platform
@@ -52,6 +52,37 @@ class WifiPasswords:
         else:
             raise NotImplementedError
 
+    @property
+    def data(self) -> dict:
+        """
+        Returns the stored data value as a dictionary. \n
+        """
+        return self._WifiPasswordsSubclass.data
+    
+
+    @property
+    def number_of_profiles(self) -> int:
+        """
+        Returns the number of saved profiles as an int. \n
+        """
+        return self._WifiPasswordsSubclass.number_of_profiles
+    
+
+    @property
+    def number_of_visible_networks(self) -> int:
+        """
+        Returns the stored data value as a dictionary. \n
+        """
+        return self._WifiPasswordsSubclass.number_visible_networks
+    
+    
+    @property
+    def number_of_interfaces(self) -> int:
+        """
+        Returns the number of network interfaces. \n
+        """
+        return self._WifiPasswordsSubclass.number_visible_networks
+    
 
     def get_passwords(self) -> dict:
         """

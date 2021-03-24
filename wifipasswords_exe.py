@@ -24,7 +24,7 @@ import sys
 from argparse import ArgumentParser, RawTextHelpFormatter
 from colorama import init, Fore, Back
 
-from . import WifiPasswords, __version__, __licence__
+from wifipasswords import WifiPasswords, __version__, __licence__
 
 
 def get_commandline_arguments() -> dict:
@@ -99,7 +99,7 @@ def print_output_footer() -> None:
     Print static footer.
     """
     print("\r\n" + "*" * 92)
-    print("{:>92}".format("JC 2021"))
+    print("{:>92}".format("JC 2019-2021"))
 
 
 def print_visible_networks(current_networks) -> None:

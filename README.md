@@ -1,6 +1,6 @@
 # wifipasswords
 
-Retreive and save all WiFi networks and passwords on the device.  
+Retrieve and save all WiFi networks and passwords on the device.  
 On windows uses the netsh subprocess.  
 On linux reads the NetworkManager files or wpa_supplicant.conf.  
 
@@ -49,6 +49,9 @@ Provides a command line interface callable after installation with:
     ~ $ wifipasswords
 ```
 
+![exampleoutput](docs/command_line_example.png "Example Command Line Output")
+
+
 To see command line options run ``wifipasswords -h``
 
 Packaging as EXE
@@ -61,9 +64,12 @@ The wifipasswords_exe.py file is the same as the __main__.py file in the package
 To-Do
 -----
 - [ ] Add macOS Support
-- [ ] Add getters and setters for accessing variables directly
-- [ ] Fix visible networks and DNS config for Linux
+- [X] Add getters for accessing variables directly
+- [ ] Fix visible network, DNS config and number of interfaces for Linux
 - [ ] Add automated tests
+- [ ] Add method to check and return only the connected SSID name and Password
+- [ ] Use nmcli to retrieve passwords on linux rather than reading files (may not require sudo) 
+
 
 About
 -----

@@ -4,12 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.3.0b - 23-03-2021
+## 0.3.2b - 24-03-2021
+### Added
+- Getters for accessing variables directly from WifiPasswords class
+### Changed
+- fixed import issue in wifipasswords_exe
+- fixed key error in get_passwords_dummy()
+
+## 0.3.1b - 23-03-2021
 ### Added
 - Added support to detect mac-randomisation
 - Added cross platform support (Linux, MacOS to be added)
 - Function to show currently connected SSID
 - Git added
+- First pypi release
 ### Changed
 - Changed to python package
 - Changed dictionary item 'pw' to 'psk'

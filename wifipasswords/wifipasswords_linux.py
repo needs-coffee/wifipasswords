@@ -128,12 +128,12 @@ class WifiPasswordsLinux:
         from secrets import token_urlsafe
         sleep(delay)
         data_wpa = {f'network {n}': {'auth': 'WPA2-Personal',
-                                     'pw': f'{token_urlsafe(randint(8,16))}',
+                                     'psk': f'{token_urlsafe(randint(8,16))}',
                                      'metered': choice([True, False]),
                                      'macrandom': choice(['Disabled', 'Enabled', 'Daily'])}
                     for n in range(1, int(quantity/2), 1)}
         data_open = {f'open network {n}': {'auth': 'Open',
-                                           'pw': '',
+                                           'psk': '',
                                            'metered': choice([True, False]),
                                            'macrandom': choice(['Disabled', 'Enabled', 'Daily'])}
                      for n in range(1, int(quantity/2), 1)}
@@ -243,7 +243,7 @@ class WifiPasswordsLinux:
         data = self.get_visible_networks()
         return self.number_visible_networks
 
-
+    ## not yet implemented on linux
     def get_number_interfaces(self) -> int:
         data = self.get_dns_config()
         return self.number_of_interfaces
