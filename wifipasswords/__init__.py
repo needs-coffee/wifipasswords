@@ -7,7 +7,7 @@
     Uses the netsh windows module. Pass --JSON argument to export as JSON.
     Pass --wpasupplicant to create a wpa_supplicant.conf file for linux
     Creation date: 10-02-2019
-    Modified date: 24-03-2021
+    Modified date: 25-03-2021
     Dependencies: colorama
 """
 __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
@@ -25,7 +25,7 @@ __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see < https: // www.gnu.org/licenses/>.
 
-__version__ = "0.3.2-beta"
+__version__ = "0.3.3-beta"
 __licence__ = "GPLv3"  # GNU General Public Licence v3
 
 import platform
@@ -190,3 +190,10 @@ class WifiPasswords:
         checks all active interfaces on the system. \n
         """
         return self._WifiPasswordsSubclass.get_currently_connected_ssids()
+
+    
+    def get_currently_connected_passwords(self) -> list:
+        """
+        Returns a tuple of (ssid, psk) for each currently connected network as a list.
+        """
+        return self._WifiPasswordsSubclass.get_currently_connected_passwords()

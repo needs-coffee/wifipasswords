@@ -100,6 +100,9 @@ class WifiPasswordsLinux:
             network_blocks = re.findall('(?<=network=)[^}]*(?=})',file_string)
             for network_block in network_blocks:
                 block_stripped = network_block.strip().replace('\t','').replace('\n',' ').split(' ')
+                ssid = ' '
+                auth = ' '
+                psk = ' '
                 for item in block_stripped:
                     if 'ssid' in item:
                         ssid = item.split('ssid=')[1][1:-1]
@@ -267,3 +270,11 @@ class WifiPasswordsLinux:
                 connected_ssids.append(item)
 
         return connected_ssids
+
+    ##
+    ## to be implemented 
+    def get_currently_connected_passwords(self) -> list:
+        """
+        Returns a tuple of (ssid, psk) for each currently connected network.
+        """
+        return [('','')]

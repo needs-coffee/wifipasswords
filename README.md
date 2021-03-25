@@ -32,9 +32,10 @@ Usage
 from wifipasswords import WifiPasswords
 
 passwords = WifiPasswords().get_passwords()
-connected_ssids = WifiPasswords().get_currently_connected_ssids()
+connected_passwords = WifiPasswords().get_currently_connected_passwords()
 
 print(passwords)
+print(connected_passwords)
 
 WifiPasswords().save_wpa_supplicant('.', passwords, True, 'GB')
 ```
@@ -67,14 +68,14 @@ To-Do
 - [X] Add getters for accessing variables directly
 - [ ] Fix visible network, DNS config and number of interfaces for Linux
 - [ ] Add automated tests
-- [ ] Add method to check and return only the connected SSID name and Password
+- [X] Add method to check and return only the connected SSID name and Password
 - [ ] Use nmcli to retrieve passwords on linux rather than reading files (may not require sudo) 
-
+- [X] Multithreading support for windows to imporove execution speed
 
 About
 -----
 Creation date: 10-02-2019  
-Modified date: 23-03-2021  
+Modified date: 25-03-2021  
 Dependencies: colorama  
 
 

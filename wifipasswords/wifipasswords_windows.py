@@ -1,6 +1,6 @@
 # windows specific version of class
 # imported as subclass to main WifiPasswords class in __init__
-# functions are 1:1 maapping of stub funcitons in WifiPasswords with platform specific code
+# exposed functions are 1:1 maapping of stub funcitons in WifiPasswords with platform specific code
 # documentation for funcitons provided only in main __init__ WifiPasswords class as is the only class designed to be exposed
 
 __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
@@ -22,9 +22,9 @@ import subprocess
 import os
 import json
 import re
+from multiprocessing.dummy import Pool as ThreadPool
 
 from . import __version__, __copyright__, __licence__
-
 
 class WifiPasswordsWindows:
     def __init__(self) -> None:
@@ -35,41 +35,60 @@ class WifiPasswordsWindows:
         self.net_template = {'auth': '', 'psk': '',
                              'metered': False, 'macrandom': 'Disabled'}
 
-    def get_passwords(self) -> dict:
+
+    @staticmethod
+    def _command_runner(shell_commands:list) -> str:
+        """
+        Split subprocess calls into separate runner module for clarity of code.\n
+        Takes the command to execute as a subprocess in the form of a list.\n
+        Returns the string output as a utf-8 decoded output.\n
+        """
         # need to use pipes for all STDIO on windows if running without interactive console.
         # STARTUPINFO is only present on windows, not linux
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        profiles_list = subprocess.run(['netsh', 'wlan', 'show', 'profiles'],
+        return_data = subprocess.run(shell_commands,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE,
                                        stdin=subprocess.PIPE,
-                                       startupinfo=si).stdout.decode('utf-8').split('\r\n')
+                                       startupinfo=si).stdout.decode('utf-8')
+        return return_data
 
+
+    def _get_password_subthread(self,network):
+        # network is a tuple from the networks dictionary 
+        # values are (ssid, value dictionary)
+        profile_info = self._command_runner(
+                    ['netsh', 'wlan', 'show', 'profile', network[0], 'key=clear']).split('\r\n')
+
+        for row in profile_info:
+            if "Key Content" in row:
+                network[1]['psk'] = row.split(': ')[1].strip()
+            if "Authentication" in row:
+                network[1]['auth'] = row.split(': ')[1].strip()
+            if "Cost" in row:
+                if "Fixed" in row or "Variable" in row:
+                    network[1]['metered'] = True
+            if "MAC Randomization" in row:
+                network[1]['macrandom'] = row.split(': ')[1].strip()
+        return network  
+
+
+    def get_passwords(self) -> dict:
+        profiles_list = self._command_runner(
+                        ['netsh', 'wlan', 'show', 'profiles']).split('\r\n')
+        
         networks = {(row.split(': ')[1]): self.net_template.copy()
-                    for row in profiles_list if "User Profile" in row}
+                    for row in profiles_list if "Profile     :" in row}
 
-        for net, value in networks.items():
-            profile_info = subprocess.run(['netsh', 'wlan', 'show', 'profile', net, 'key=clear'],
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE,
-                                          stdin=subprocess.PIPE,
-                                          startupinfo=si).stdout.decode('utf-8').split('\r\n')
-
-            for row in profile_info:
-                if "Key Content" in row:
-                    value['psk'] = row.split(': ')[1].strip()
-                if "Authentication" in row:
-                    value['auth'] = row.split(': ')[1].strip()
-                if "Cost" in row:
-                    if "Fixed" in row or "Variable" in row:
-                        value['metered'] = True
-                if "MAC Randomization" in row:
-                    value['macrandom'] = row.split(': ')[1].strip()
-
-        self.number_of_profiles = len(networks)
-        self.data = networks
-        return networks
+        # from testing 6 seems the optimum thread number 
+        pool = ThreadPool(6) 
+        results = dict(pool.imap(self._get_password_subthread,networks.items()))
+        pool.close()
+        pool.join()
+        self.number_of_profiles = len(results)
+        self.data = results
+        return results
 
 
     def get_passwords_dummy(self, delay: float = 0.5, quantity: int = 10) -> dict:
@@ -98,13 +117,7 @@ class WifiPasswordsWindows:
 
 
     def get_visible_networks(self, as_dictionary=False) -> str:
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        current_networks = subprocess.run(['netsh', 'wlan', 'show', 'networks', 'mode=Bssid'],
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE,
-                                          stdin=subprocess.PIPE,
-                                          startupinfo=si).stdout.decode('utf-8')
+        current_networks = self._command_runner(['netsh', 'wlan', 'show', 'networks', 'mode=Bssid'])
 
         if "powered down" in current_networks:
             self.number_visible_networks = 0
@@ -161,13 +174,7 @@ class WifiPasswordsWindows:
 
 
     def get_dns_config(self, as_dictionary=False) -> str:
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        dns_settings = subprocess.run(['netsh', 'interface', 'ip', 'show', 'dns'],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE,
-                                      stdin=subprocess.PIPE,
-                                      startupinfo=si).stdout.decode('utf-8')
+        dns_settings = self._command_runner(['netsh', 'interface', 'ip', 'show', 'dns'])
 
         split_dns_config = dns_settings.strip().split('\r\n\r\n')
         self.number_of_interfaces = len(split_dns_config)
@@ -258,14 +265,8 @@ class WifiPasswordsWindows:
 
     def get_currently_connected_ssids(self) -> list:
         connected_ssids = []
+        current_interfaces = self._command_runner(['netsh', 'wlan', 'show', 'interfaces']).split('\r\n')
 
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        current_interfaces = subprocess.run(['netsh', 'wlan', 'show', 'interfaces'],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE,
-                                      stdin=subprocess.PIPE,
-                                      startupinfo=si).stdout.decode('utf-8').split('\r\n')
         for line in current_interfaces:
             # space before ssid prevents BSSID being captured
             if " SSID" in line:
@@ -273,3 +274,18 @@ class WifiPasswordsWindows:
                 connected_ssids.append(line.split(':')[1].strip())
         
         return connected_ssids
+
+
+    def get_currently_connected_passwords(self) -> list:
+        connected_passwords = []
+        connected_ssids = self.get_currently_connected_ssids()
+        
+        for ssid in connected_ssids:
+            key_data = self._command_runner(['netsh', 'wlan', 'show', 'profile', ssid, 'key=clear']).split('\r\n')
+            psk = ''
+            for row in key_data:
+                if "Key Content" in row:
+                    psk = row.split(': ')[1].strip()
+            connected_passwords.append((ssid,psk))
+
+        return connected_passwords

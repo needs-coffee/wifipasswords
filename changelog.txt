@@ -4,12 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
+## 0.3.3b - 25-03-2021
+### Added
+- added get_currently_connected_passwords() to return current connected SSID and psk only
+### Changed
+- subprocess command calls split out into separate function for code clarity/efficiency 
+- Multithreading support in windows to get_passwords() -> execution time reduced from 2.1s to 0.6s for 24 networks
+
+
 ## 0.3.2b - 24-03-2021
 ### Added
 - Getters for accessing variables directly from WifiPasswords class
 ### Changed
 - fixed import issue in wifipasswords_exe
 - fixed key error in get_passwords_dummy()
+
 
 ## 0.3.1b - 23-03-2021
 ### Added
