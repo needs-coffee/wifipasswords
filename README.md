@@ -6,21 +6,21 @@ On linux reads the NetworkManager files or wpa_supplicant.conf.
 
 Cross platform:
 - Windows
-- Linux (work in progress - need to add DNS and visible network config)
+- Linux
 - macOS (to be implemented)
 
-**NOTE:** requires sudo privileges on linux when running the get_password() function due to file ownership permissions.  
+**NOTE:** requires sudo privileges on linux only if NetworkManager is not used.
 
 Features
 --------
-- Importable as a package or able to be run directly on the command line.
+- Importable as a package or able to be run directly on the command line
 - Tested in Python 3.6 - 3.9
-- Tested on Windows 10, Ubuntu 18 - 20.04 and Debian Buster.
+- Tested on Windows 10, Ubuntu 18 - 20.04 and Debian Buster
 - Returns WiFi passwords as a dictionary
-- Able to show visible wifi networks 
-- Able to show currently connected SSID.
-- Able to show current DNS config (Windows only at present)
-- Can save networks as JSON or wpa_supplicant.conf file.
+- Able to show visible wifi networks
+- Able to show currently connected SSID
+- Able to show current DNS config
+- Can save networks as JSON or wpa_supplicant.conf file
 
 Installation
 ------------
@@ -66,16 +66,16 @@ To-Do
 -----
 - [ ] Add macOS Support
 - [X] Add getters for accessing variables directly
-- [ ] Fix visible network, DNS config and number of interfaces for Linux
+- [X] Fix visible network, DNS config and number of interfaces for Linux
 - [ ] Add automated tests
 - [X] Add method to check and return only the connected SSID name and Password
-- [ ] Use nmcli to retrieve passwords on linux rather than reading files (may not require sudo) 
+- [X] Use nmcli to retrieve passwords on linux rather than reading files (may not require sudo) 
 - [X] Multithreading support for windows to imporove execution speed
 
 About
 -----
 Creation date: 10-02-2019  
-Modified date: 25-03-2021  
+Modified date: 26-03-2021  
 Dependencies: colorama  
 
 

@@ -1,6 +1,6 @@
 # Linux specific version of class
 # imported as subclass to main WifiPasswords class in __init__
-# functions are 1:1 maapping of stub funcitons in WifiPasswords with platform specific code
+# exposed functions are 1:1 maapping of stub funcitons in WifiPasswords with platform specific code
 # documentation for funcitons provided only in main __init__ WifiPasswords class as is the only class designed to be exposed
 
 __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
@@ -22,8 +22,7 @@ import subprocess
 import os
 import json
 import re
-import configparser
-import io
+from multiprocessing.dummy import Pool as ThreadPool
 
 from . import __version__, __copyright__, __licence__
 
@@ -36,70 +35,74 @@ class WifiPasswordsLinux:
         self.number_of_profiles = 0
         self.number_visible_networks = 0
         self.number_of_interfaces = 0
-        self.net_template = {'auth': '', 'pw': '',
+        self.net_template = {'auth': '', 'psk': '',
                              'metered': False, 'macrandom': 'Disabled'}
 
-    def get_passwords(self) -> dict:
-        ## blank network dictionary 
-        networks = {}
 
-        ## check network manager first, if configured dont check wpa_supplicant file 
+    @staticmethod
+    def _command_runner(shell_commands: list) -> str:
+        """
+        Split subprocess calls into separate runner module for clarity of code.\n
+        Takes the command to execute as a subprocess in the form of a list.\n
+        Returns the string output as a utf-8 decoded output.\n
+        """
+        return_data = subprocess.run(shell_commands,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     stdin=subprocess.PIPE).stdout.decode('utf-8')
+        return return_data
+
+
+    def _get_password_subthread(self, network):
+        # network is a tuple from the networks dictionary
+        # values are (ssid, value dictionary)
+        profile_info = self._command_runner(
+            ['nmcli', '-t', '-f', '802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,connection.metered,802-11-wireless.cloned-mac-address',
+                'c', 's', network[0], '--show-secrets']).split('\n')
+        
+        network[1]['auth'] = 'Open'
+        network[1]['psk'] = ''
+        network[1]['metered'] = False
+        network[1]['macrandom'] = 'Disabled'
+
+        for row in profile_info:
+            if "802-11-wireless-security.key-mgmt" in row:
+                network[1]['auth'] = row.split(':')[1]
+            if "802-11-wireless-security.psk" in row:
+                network[1]['psk'] = row.split(':')[1]
+            if "connection.metered" in row:
+                if "yes" in row.split(':')[1]:
+                    network[1]['metered'] = True
+            if "802-11-wireless.cloned-mac-address" in row:
+                if row.split(':')[1] != '':
+                    network[1]['macrandom'] = row.split(':')[1]
+        return network
+
+
+    def get_passwords(self) -> dict:
+        ## check network manager first, if configured dont check wpa_supplicant file
         # if the path doesnt exist then NetworkManager prob isnt installed/configured.
         if os.path.exists(self.nm_path):
-            nm_files = [os.path.join(self.nm_path,file) for file in os.listdir(self.nm_path)
-                        if file.endswith('.nmconnection')]
+            profiles_list = self._command_runner(['nmcli','-t','-f','NAME,TYPE','c']).split('\n')
+            networks = {re.split(r"(?<!\\):",network)[0]:self.net_template.copy() 
+                                for network in profiles_list if '802-11-wireless' in network}
+            pool = ThreadPool(6)
+            results = dict(pool.imap(self._get_password_subthread,networks.items()))
+            pool.close()
+            pool.join()
 
-            for file in nm_files:
-                file_string = subprocess.run(['sudo', 'cat', file],
-                                               stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE,
-                                               stdin=subprocess.PIPE).stdout.decode('utf-8')
+            self.number_of_profiles = len(results)
+            self.data = results
 
-                buf = io.StringIO(file_string)
-                parser = configparser.ConfigParser()
-                parser.read_file(buf)
-
-                if parser['connection']['type'] == 'wifi':
-                    ssid = parser['wifi']['ssid']
-
-                    if parser.has_option('wifi-security','psk'):
-                        psk = parser['wifi-security']['psk']
-                    else:
-                        psk = ''
-
-                    if psk == '':
-                        auth = 'Open'
-                    else:
-                        if parser.has_option('wifi-security', 'key-mgmt'):
-                            auth = parser['wifi-security']['key-mgmt']
-                        else:
-                            auth = 'Open'
-
-                    metered = False
-                    if parser.has_option('connection','metered'):
-                        if parser['connection']['metered'] == 1:
-                            metered = True
-                    
-                    mac_random = 'Disabled'
-                    if parser.has_option('wifi','cloned-mac-address'):
-                        if parser['wifi']['cloned-mac-address'] == 'random':
-                            mac_random = 'Random'
-                        elif parser['wifi']['cloned-mac-address'] == 'stable':
-                            mac_random = 'Stable Random'
-                    
-                    networks[ssid] = {'auth':auth, 'psk': psk, 'metered': metered, 'macrandom': mac_random}
-
-        ## check wpa_supplicant file, but only if the file exists and no networks were found from networkmanager 
+        ## check wpa_supplicant file, but only if the file exists and no networks were found from networkmanager
         # if network manager is being used there shouldn't be an active wpa_supplicant file
-        if os.path.isfile(self.wpa_supplicant_file_path) and len(networks) == 0:
-            file_string = subprocess.run(['sudo', 'cat', self.wpa_supplicant_file_path],
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE,
-                                         stdin=subprocess.PIPE).stdout.decode('utf-8')
-
-            network_blocks = re.findall('(?<=network=)[^}]*(?=})',file_string)
+        elif os.path.isfile(self.wpa_supplicant_file_path):
+            results = {}
+            file_string = self._command_runner(['sudo','cat',self.wpa_supplicant_file_path])
+            network_blocks = re.findall('(?<=network=)[^}]*(?=})', file_string)
             for network_block in network_blocks:
-                block_stripped = network_block.strip().replace('\t','').replace('\n',' ').split(' ')
+                block_stripped = network_block.strip().replace(
+                    '\t', '').replace('\n', ' ').split(' ')
                 ssid = ' '
                 auth = ' '
                 psk = ' '
@@ -114,15 +117,15 @@ class WifiPasswordsLinux:
                             auth = auth_temp
                     if 'psk' in item:
                         psk = item.split('psk=')[1][1:-1]
-                
+
                 metered = False
                 mac_random = 'Disabled'
-                networks[ssid] = {'auth': auth, 'psk': psk,
+                results[ssid] = {'auth': auth, 'psk': psk,
                                   'metered': metered, 'macrandom': mac_random}
+        else:
+            results = {}
 
-        self.number_of_profiles = len(networks)
-        self.data = networks
-        return networks
+        return results                     
 
 
     def get_passwords_dummy(self, delay: float = 0.5, quantity: int = 10) -> dict:
@@ -150,47 +153,73 @@ class WifiPasswordsLinux:
         return self.data
 
 
-    #to do - get further details from the network info like windows
-    # add to dictionary logic - to add further details
-    # fix for multiple networks
-    # currently just returns a string of current networks or a dictionary with None values 
     def get_visible_networks(self, as_dictionary=False) -> str:
-        #first find the wifi interfaces, for now only identifies the first interface
-        interfaces_text = subprocess.run(['iwconfig'],
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE,
-                                                stdin=subprocess.PIPE).stdout.decode('utf-8').split('\n')
-        wifi_interface = interfaces_text[0].split()[0]
-
-        #then check the networks for the interfaces
-        current_networks_lines = subprocess.run(['sudo','iwlist',wifi_interface,'scan'],
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE,
-                                          stdin=subprocess.PIPE).stdout.decode('utf-8').split('\n')
-
-        current_networks_list = [] 
-        for line in current_networks_lines:
-            if 'ESSID' in line:
-                if line.split('ESSID:')[1][1:-1] == '':
-                    current_networks_list.append('Hidden')
-                else:
-                    current_networks_list.append(line.split('ESSID:')[1][1:-1])
-
-
-        if as_dictionary:
-            visible_dict = {k:None for k in current_networks_list}
-            return visible_dict
+        ## check nmcli first, if doesnt exist return not implemented string
+        ## 
+        if os.path.exists(self.nm_path):
+            network_dict = {}
+            network_list = []
+            
+            visible_list = self._command_runner(['nmcli','-t','-f','SSID,CHAN,RATE,SIGNAL,SECURITY','dev','wifi']).split('\n')
+            for row in visible_list:
+                try:
+                    row_split = row.split(':')
+                    if row_split[0] == '':
+                        row_split[0] = 'Hidden'
+                    if as_dictionary:
+                        network_dict[row_split[0]] = {'auth':row_split[4], 
+                                                        'channel':row_split[1],
+                                                        'signal':row_split[3],
+                                                        'rates':row_split[2]} 
+                    else:
+                        network_list.append(f"{row_split[0]} \n Channel: {row_split[1]} \n Rate: {row_split[2]} \n Signal: {row_split[3]}% \n Security: {row_split[4]} \n")
+                except:
+                    pass
+            if as_dictionary:
+                self.number_visible_networks = len(network_dict)
+                return network_dict
+            else:
+                self.number_visible_networks = len(network_list)
+                visible_networks = f'There are {len(network_list)} networks visible.' + '\n ----- \n' + '\n'.join(network_list)
+                return visible_networks
         else:
-            return '\n'.join(current_networks_list)
+            if as_dictionary:
+                return {}
+            else:
+                return 'Requires NetworkManager.'
 
 
-    # to do - not yet implemented on linux
     def get_dns_config(self, as_dictionary=False) -> str:
+        dns_dict = {}
+        interfaces = self._command_runner(['nmcli','-t','-f','DEVICE,CONNECTION','dev']).split('\n')
+        for interface in interfaces:
+            # try:
+            if len(interface.split(':')) == 2:
+                suffix = ''
+                type = 'None'
+                DNS = []
+                interface_data = self._command_runner(['nmcli','-t','-f','IP4.DNS,IP4.DOMAIN','device','show',interface.split(':')[0]]).split('\n')
+                profile_data = self._command_runner(['nmcli','-t','-f','ipv4.dns,ipv4.ignore-auto-dns','c','s',interface.split(':')[1]]).split('\n')
+                for row in interface_data:
+                    if 'IP4.DOMAIN' in row:
+                        suffix = row.split(':')[1]
+                    if 'IP4.DNS' in row:
+                        DNS = row.split(':')[1].split(',')
+                for row in profile_data:
+                    if 'ipv4.ignore-auto-dns' in row:
+                        if row.split(':')[1] == 'yes':
+                            type = 'Static'
+                        elif row.split(':')[1] == 'no' and len(DNS) != 0:
+                            type = 'DHCP'
+                dns_dict[interface.split(':')[0]] = {'type':type, 'DNS': DNS, 'suffix': suffix}
+
         if as_dictionary:
-            dns_dict = {}
             return dns_dict
         else:
-            return 'Not yet implemented for linux'
+            dns_string = ''
+            for k,v in dns_dict.items():
+                dns_string = dns_string + f"Interface: {k} \n type: {v['type']} \n DNS: {v['DNS']} \n domain: {v['suffix']}" + '\n' + '\n'
+            return dns_string
 
 
     def save_wpa_supplicant(self, path: str, data: dict = None, include_open: bool = True,
@@ -246,7 +275,7 @@ class WifiPasswordsLinux:
         data = self.get_visible_networks()
         return self.number_visible_networks
 
-    ## not yet implemented on linux
+
     def get_number_interfaces(self) -> int:
         data = self.get_dns_config()
         return self.number_of_interfaces
@@ -260,21 +289,29 @@ class WifiPasswordsLinux:
 
     def get_currently_connected_ssids(self) -> list:
         connected_ssids = []
-        connected_data = subprocess.run(['iwgetid','-r'],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE,
-                                      stdin=subprocess.PIPE).stdout.decode('utf-8')
+        connected_data = self._command_runner(['nmcli','-t','d']).split('\n')
                                       
-        for item in connected_data.split('\n'):
-            if item != '':
-                connected_ssids.append(item)
-
+        for row in connected_data:
+            try:
+                if row.split(':')[1] == 'wifi' and row.split(':')[2] == 'connected':
+                    connected_ssids.append(row.split(':')[3])
+            except:
+                pass
         return connected_ssids
 
-    ##
-    ## to be implemented 
+    
     def get_currently_connected_passwords(self) -> list:
         """
         Returns a tuple of (ssid, psk) for each currently connected network.
         """
-        return [('','')]
+        connected_passwords = []
+        for ssid in self.get_currently_connected_ssids():
+            psk = ''
+            key_content = self._command_runner(['nmcli','-t','-f','802-11-wireless-security.psk','c','s',ssid,'--show-secrets'])
+            if key_content != '':
+                for row in key_content.split('\n'):
+                    if '802-11-wireless-security.psk' in row:
+                        psk = row.split(':')[1]
+                connected_passwords.append((ssid,psk))
+            
+        return connected_passwords

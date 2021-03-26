@@ -118,28 +118,11 @@ def print_current_dns_config(dns_config) -> None:
     print(dns_config)
     print("*"*92)
 
-
-def escalate_priv():
-    """
-    escalate the priv on linux. \n
-    run before wifipasswords are gathered to avoid sudo request after printing header.\n
-    """
-    import subprocess
-    dummy_output = subprocess.run(['sudo','ls'],
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     stdin=subprocess.PIPE).stdout.decode('utf-8').split('\n')
-
-
 def cli():
 
     init(autoreset=True)
     pw = WifiPasswords()
     args = get_commandline_arguments()
-
-    if platform.system() == 'Linux':
-        escalate_priv()
-
     print_output_heading()
     data = pw.get_passwords()
     active_ssids = pw.get_currently_connected_ssids()

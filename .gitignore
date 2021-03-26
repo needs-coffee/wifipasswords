@@ -5,6 +5,7 @@ exe/
 dist/
 build/
 old/
+temp/
 __pycache__/
 .vscode/
 *.ftpconfig

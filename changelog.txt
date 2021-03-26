@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## 0.3.4b - 26-03-2021
+### Added
+- Visible network, DNS config and number of interfaces for Linux added 
+- Linux implementation now complete
+### Changed
+- Linux implementation changed to use NetworkManager (nmcli)
+- Linux now does not require sudo unless NetworkManager is not installed/used
+- Removed linux priv escalation command from CLI as no longer needed
+- Fixed import bug causing large executable size
+- Multithreading support in linux for get_passwords()
+
+
 ## 0.3.3b - 25-03-2021
 ### Added
 - added get_currently_connected_passwords() to return current connected SSID and psk only

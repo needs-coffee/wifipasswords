@@ -2,12 +2,12 @@
 """ wifipasswords.py
     Retreive and save all wifi networks and passwords on the device.
     On Windows uses netsh module.
-    On Linux reads NetworkManager files or wpa_supplicant files. Partially implemented.
+    On Linux reads NetworkManager files or wpa_supplicant files. 
     MacOS to be implemented.
     Uses the netsh windows module. Pass --JSON argument to export as JSON.
     Pass --wpasupplicant to create a wpa_supplicant.conf file for linux
     Creation date: 10-02-2019
-    Modified date: 25-03-2021
+    Modified date: 26-03-2021
     Dependencies: colorama
 """
 __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
@@ -25,7 +25,7 @@ __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see < https: // www.gnu.org/licenses/>.
 
-__version__ = "0.3.3-beta"
+__version__ = "0.3.4-beta"
 __licence__ = "GPLv3"  # GNU General Public Licence v3
 
 import platform
