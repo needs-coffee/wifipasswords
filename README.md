@@ -71,6 +71,7 @@ To-Do
 - [X] Add method to check and return only the connected SSID name and Password
 - [X] Use nmcli to retrieve passwords on linux rather than reading files (may not require sudo) 
 - [X] Multithreading support for windows to imporove execution speed
+- [ ] Add support for WPA-Enteprise 
 
 About
 -----

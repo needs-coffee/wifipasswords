@@ -25,7 +25,7 @@ __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see < https: // www.gnu.org/licenses/>.
 
-__version__ = "0.3.4-beta"
+__version__ = "0.3.5-beta"
 __licence__ = "GPLv3"  # GNU General Public Licence v3
 
 import platform

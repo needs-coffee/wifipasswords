@@ -91,18 +91,14 @@ class WifiPasswordsLinux:
             pool.close()
             pool.join()
 
-            self.number_of_profiles = len(results)
-            self.data = results
-
         ## check wpa_supplicant file, but only if the file exists and no networks were found from networkmanager
         # if network manager is being used there shouldn't be an active wpa_supplicant file
         elif os.path.isfile(self.wpa_supplicant_file_path):
             results = {}
             file_string = self._command_runner(['sudo','cat',self.wpa_supplicant_file_path])
-            network_blocks = re.findall('(?<=network=)[^}]*(?=})', file_string)
+            network_blocks = re.findall('(?<=network={)[^}]*(?=})', file_string)
             for network_block in network_blocks:
-                block_stripped = network_block.strip().replace(
-                    '\t', '').replace('\n', ' ').split(' ')
+                block_stripped = network_block.strip().replace('\t', '').split('\n')
                 ssid = ' '
                 auth = ' '
                 psk = ' '
@@ -125,6 +121,8 @@ class WifiPasswordsLinux:
         else:
             results = {}
 
+        self.number_of_profiles = len(results)
+        self.data = results
         return results                     
 
 
@@ -191,35 +189,43 @@ class WifiPasswordsLinux:
 
     def get_dns_config(self, as_dictionary=False) -> str:
         dns_dict = {}
-        interfaces = self._command_runner(['nmcli','-t','-f','DEVICE,CONNECTION','dev']).split('\n')
-        for interface in interfaces:
-            # try:
-            if len(interface.split(':')) == 2:
-                suffix = ''
-                type = 'None'
-                DNS = []
-                interface_data = self._command_runner(['nmcli','-t','-f','IP4.DNS,IP4.DOMAIN','device','show',interface.split(':')[0]]).split('\n')
-                profile_data = self._command_runner(['nmcli','-t','-f','ipv4.dns,ipv4.ignore-auto-dns','c','s',interface.split(':')[1]]).split('\n')
-                for row in interface_data:
-                    if 'IP4.DOMAIN' in row:
-                        suffix = row.split(':')[1]
-                    if 'IP4.DNS' in row:
-                        DNS = row.split(':')[1].split(',')
-                for row in profile_data:
-                    if 'ipv4.ignore-auto-dns' in row:
-                        if row.split(':')[1] == 'yes':
-                            type = 'Static'
-                        elif row.split(':')[1] == 'no' and len(DNS) != 0:
-                            type = 'DHCP'
-                dns_dict[interface.split(':')[0]] = {'type':type, 'DNS': DNS, 'suffix': suffix}
+        ## uses nmcli - if doesnt exist return error message
+        if os.path.exists(self.nm_path):
+            interfaces = self._command_runner(['nmcli','-t','-f','DEVICE,CONNECTION','dev']).split('\n')
+            for interface in interfaces:
+                # try:
+                if len(interface.split(':')) == 2:
+                    suffix = ''
+                    type = 'None'
+                    DNS = []
+                    interface_data = self._command_runner(['nmcli','-t','-f','IP4.DNS,IP4.DOMAIN','device','show',interface.split(':')[0]]).split('\n')
+                    profile_data = self._command_runner(['nmcli','-t','-f','ipv4.dns,ipv4.ignore-auto-dns','c','s',interface.split(':')[1]]).split('\n')
+                    for row in interface_data:
+                        if 'IP4.DOMAIN' in row:
+                            suffix = row.split(':')[1]
+                        if 'IP4.DNS' in row:
+                            DNS = row.split(':')[1].split(',')
+                    for row in profile_data:
+                        if 'ipv4.ignore-auto-dns' in row:
+                            if row.split(':')[1] == 'yes':
+                                type = 'Static'
+                            elif row.split(':')[1] == 'no' and len(DNS) != 0:
+                                type = 'DHCP'
+                    dns_dict[interface.split(':')[0]] = {'type':type, 'DNS': DNS, 'suffix': suffix}
 
-        if as_dictionary:
-            return dns_dict
+            if as_dictionary:
+                return dns_dict
+            else:
+                dns_string = ''
+                for k,v in dns_dict.items():
+                    dns_string = dns_string + f"Interface: {k} \n type: {v['type']} \n DNS: {v['DNS']} \n domain: {v['suffix']}" + '\n' + '\n'
+                return dns_string
+        
         else:
-            dns_string = ''
-            for k,v in dns_dict.items():
-                dns_string = dns_string + f"Interface: {k} \n type: {v['type']} \n DNS: {v['DNS']} \n domain: {v['suffix']}" + '\n' + '\n'
-            return dns_string
+            if as_dictionary:
+                return {}
+            else:
+                return "Requires NetworkManager"
 
 
     def save_wpa_supplicant(self, path: str, data: dict = None, include_open: bool = True,
@@ -289,29 +295,67 @@ class WifiPasswordsLinux:
 
     def get_currently_connected_ssids(self) -> list:
         connected_ssids = []
-        connected_data = self._command_runner(['nmcli','-t','d']).split('\n')
-                                      
-        for row in connected_data:
-            try:
-                if row.split(':')[1] == 'wifi' and row.split(':')[2] == 'connected':
-                    connected_ssids.append(row.split(':')[3])
-            except:
-                pass
+
+        #check if network manager is installed by checking config path, else use iwgetid
+        if os.path.exists(self.nm_path):
+            connected_data = self._command_runner(['nmcli', '-t', 'd']).split('\n')
+            for row in connected_data:
+                try:
+                    if row.split(':')[1] == 'wifi' and row.split(':')[2] == 'connected':
+                        connected_ssids.append(row.split(':')[3])
+                except:
+                    pass
+
+        #if there is no nmcli, use iwgetid -r
+        else:
+            connected_data = self._command_runner(['iwgetid', '-r']).split('\n')
+            for row in connected_data:
+                try:
+                    if row != '':
+                        connected_ssids.append(row)
+                except:
+                    pass
+
         return connected_ssids
 
-    
+
     def get_currently_connected_passwords(self) -> list:
         """
         Returns a tuple of (ssid, psk) for each currently connected network.
         """
         connected_passwords = []
-        for ssid in self.get_currently_connected_ssids():
-            psk = ''
-            key_content = self._command_runner(['nmcli','-t','-f','802-11-wireless-security.psk','c','s',ssid,'--show-secrets'])
-            if key_content != '':
-                for row in key_content.split('\n'):
-                    if '802-11-wireless-security.psk' in row:
-                        psk = row.split(':')[1]
-                connected_passwords.append((ssid,psk))
-            
+        connected_ssids = self.get_currently_connected_ssids()
+
+        if os.path.exists(self.nm_path):
+            for ssid in connected_ssids:
+                psk = ''
+                key_content = self._command_runner(
+                    ['nmcli', '-t', '-f', '802-11-wireless-security.psk', 'c', 's', ssid, '--show-secrets'])
+                if key_content != '':
+                    for row in key_content.split('\n'):
+                        if '802-11-wireless-security.psk' in row:
+                            psk = row.split(':')[1]
+                    connected_passwords.append((ssid, psk))
+
+        elif os.path.isfile(self.wpa_supplicant_file_path):
+            file_string = self._command_runner(
+                ['sudo', 'cat', self.wpa_supplicant_file_path])
+            network_blocks = re.findall('(?<=network=)[^}]*(?=})', file_string)
+
+            #if matching a connected ssid
+            matched_blocks = [net for net in network_blocks if any(
+                xs in net for xs in connected_ssids)]
+
+            for network_block in matched_blocks:
+                block_stripped = network_block.strip().replace(
+                    '\t', '').replace('\n', ' ').split(' ')
+                ssid = ''
+                psk = ''
+                for row in block_stripped:
+                    if 'ssid' in row:
+                        ssid = row.split('ssid=')[1][1:-1]
+                    if 'psk' in row:
+                        psk = row.split('psk=')[1][1:-1]
+                connected_passwords.append((ssid, psk))
+
         return connected_passwords

@@ -146,7 +146,7 @@ def cli():
         if args['json'] == None:
             args['json'] = args['all']
         print()
-        pw.save_json(os.path.join(args['json'], 'networks_data.json'))
+        pw.save_json(os.path.join(args['json'], 'networks_data.json'),data)
         print("JSON saved >> {}".format(
             os.path.join(args['json'], 'networks_data.json')))
     print()
