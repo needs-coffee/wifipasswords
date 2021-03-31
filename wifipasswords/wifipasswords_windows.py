@@ -289,3 +289,24 @@ class WifiPasswordsWindows:
             connected_passwords.append((ssid,psk))
 
         return connected_passwords
+
+
+    def get_known_ssids(self) -> list:
+        profiles_list = self._command_runner(
+            ['netsh', 'wlan', 'show', 'profiles']).split('\r\n')
+
+        return [(row.split(': ')[1]) for row in profiles_list if "Profile     :" in row]
+
+
+    def get_single_password(self, ssid) -> str:
+        profile_info = self._command_runner(
+            ['netsh', 'wlan', 'show', 'profile', ssid, 'key=clear'])
+
+        if 'not found on the system' in profile_info:
+            raise ValueError('SSID not known.')
+
+        for row in profile_info.split('\r\n'):
+            if "Key Content" in row:
+                psk = row.split(': ')[1].strip()
+                return psk
+        return ''

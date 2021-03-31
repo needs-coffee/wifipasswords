@@ -7,19 +7,22 @@ On linux reads the NetworkManager files or wpa_supplicant.conf.
 Cross platform:
 - Windows
 - Linux
-- macOS (to be implemented)
+- macOS (working - however see below note)
 
-**NOTE:** requires sudo privileges on linux only if NetworkManager is not used.
+**NOTE:** requires sudo privileges on linux only if NetworkManager is not used.  
+
+**NOTE:** Macos requires admin authentication for each password read, this can result in a lot of prompts for the get_passwords() function. I am currently looking for a solution for this.
 
 Features
 --------
 - Importable as a package or able to be run directly on the command line
 - Tested in Python 3.6 - 3.9
-- Tested on Windows 10, Ubuntu 18 - 20.04 and Debian Buster
+- Tested on Windows 10, Ubuntu 18 - 20.04, Debian Buster, macOS 10.13 (High Sierra) and macOS 10.14 (Mojave)
 - Returns WiFi passwords as a dictionary
 - Able to show visible wifi networks
 - Able to show currently connected SSID
 - Able to show current DNS config
+- Able to show known SSIDs and find single network passwords
 - Can save networks as JSON or wpa_supplicant.conf file
 
 Installation
@@ -64,7 +67,8 @@ The wifipasswords_exe.py file is the same as the __main__.py file in the package
 
 To-Do
 -----
-- [ ] Add macOS Support
+- [X] Add macOS Support
+- [ ] Improve mac authentication methods
 - [X] Add getters for accessing variables directly
 - [X] Fix visible network, DNS config and number of interfaces for Linux
 - [ ] Add automated tests
@@ -76,7 +80,7 @@ To-Do
 About
 -----
 Creation date: 10-02-2019  
-Modified date: 26-03-2021  
+Modified date: 30-03-2021  
 Dependencies: colorama  
 
 

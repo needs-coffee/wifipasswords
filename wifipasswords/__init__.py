@@ -7,7 +7,7 @@
     Uses the netsh windows module. Pass --JSON argument to export as JSON.
     Pass --wpasupplicant to create a wpa_supplicant.conf file for linux
     Creation date: 10-02-2019
-    Modified date: 26-03-2021
+    Modified date: 30-03-2021
     Dependencies: colorama
 """
 __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
@@ -25,7 +25,7 @@ __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see < https: // www.gnu.org/licenses/>.
 
-__version__ = "0.3.5-beta"
+__version__ = "0.4.0-beta"
 __licence__ = "GPLv3"  # GNU General Public Licence v3
 
 import platform
@@ -46,7 +46,8 @@ class WifiPasswords:
             from .wifipasswords_linux import WifiPasswordsLinux as _PlatformClass
             self._WifiPasswordsSubclass = _PlatformClass()
         elif self.platform == 'Darwin':
-            raise NotImplementedError
+            from .wifipasswords_macos import WifiPasswordsMacos as _PlatformClass
+            self._WifiPasswordsSubclass = _PlatformClass()
         elif self.platform == 'Java':
             raise NotImplementedError
         else:
@@ -197,3 +198,19 @@ class WifiPasswords:
         Returns a tuple of (ssid, psk) for each currently connected network as a list.
         """
         return self._WifiPasswordsSubclass.get_currently_connected_passwords()
+
+
+    def get_known_ssids(self) -> list:
+        """
+        Returns a list of known SSIDs without password information. 
+        """
+        return self._WifiPasswordsSubclass.get_known_ssids()
+
+
+    def get_single_password(self,ssid) -> str:
+        """
+        Returns the psk for the specified SSID.\n
+        If the SSID is open, returns None. \n
+        if the SSID is not found raises a ValueError \n
+        """
+        return self._WifiPasswordsSubclass.get_single_password(ssid)

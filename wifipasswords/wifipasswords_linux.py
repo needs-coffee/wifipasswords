@@ -22,7 +22,7 @@ import subprocess
 import os
 import json
 import re
-from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing.dummy import Pool as ThreadPool, Value
 
 from . import __version__, __copyright__, __licence__
 
@@ -359,3 +359,63 @@ class WifiPasswordsLinux:
                 connected_passwords.append((ssid, psk))
 
         return connected_passwords
+
+
+    def get_known_ssids(self) -> list:
+        ssids = []
+        ## check network manager first, if configured dont check wpa_supplicant file
+        # if the path doesnt exist then NetworkManager prob isnt installed/configured.
+        if os.path.exists(self.nm_path):
+            profiles_list = self._command_runner(['nmcli', '-t', '-f', 'NAME,TYPE', 'c']).split('\n')
+            ssids = [re.split(r"(?<!\\):", ssid)[0] for ssid in profiles_list if '802-11-wireless' in ssid]
+
+        ## check wpa_supplicant file, but only if the file exists and no networks were found from networkmanager
+        # if network manager is being used there shouldn't be an active wpa_supplicant file
+        elif os.path.isfile(self.wpa_supplicant_file_path):
+            file_string = self._command_runner(['sudo', 'cat', self.wpa_supplicant_file_path])
+            network_blocks = re.findall('(?<=network={)[^}]*(?=})', file_string)
+            for network_block in network_blocks:
+                block_stripped = network_block.strip().replace('\t', '').split('\n')
+                ssid = ' '
+                for item in block_stripped:
+                    if 'ssid' in item:
+                        ssid = item.split('ssid=')[1][1:-1]
+                ssids.append(ssid)
+        else:
+            ssids = []
+
+        self.number_of_profiles = len(ssids)
+        return ssids
+
+
+    def get_single_password(self, ssid) -> str:
+        psk = ''
+        found = False
+        if os.path.exists(self.nm_path):
+            key_content = self._command_runner(['nmcli', '-t', '-f',
+                             '802-11-wireless-security.psk,connection.id', 'c', 's', ssid, '--show-secrets'])
+            if key_content == '':
+                raise ValueError('SSID not known.')
+            else:
+                found = True
+            
+            for row in key_content.split('\n'):
+                if '802-11-wireless-security.psk' in row:
+                    psk = row.split(':')[1]
+
+        elif os.path.isfile(self.wpa_supplicant_file_path):
+            file_string = self._command_runner(['sudo', 'cat', self.wpa_supplicant_file_path])
+            network_blocks = re.findall('(?<=network=)[^}]*(?=})', file_string)
+
+            for network_block in network_blocks:
+                if ssid in network_block:
+                    found = True
+                    stripped_block = network_block.strip().replace(
+                        '\t', '').replace('\n', ' ').split(' ')
+                    for row in stripped_block:
+                        if 'psk' in row:
+                            psk = row.split('psk=')[1][1:-1]
+        if found:
+            return psk
+        else:
+            raise ValueError('SSID not known.')
