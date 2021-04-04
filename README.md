@@ -9,6 +9,8 @@ Cross platform:
 - Linux
 - macOS (working - however see below note)
 
+there is also a GUI version of this tool that can be found here - [WifiPasswords-GUI](https://github.com/needs-coffee/wifipasswords-GUI)
+
 **NOTE:** requires sudo privileges on linux only if NetworkManager is not used.  
 
 **NOTE:** Macos requires admin authentication for each password read, this can result in a lot of prompts for the get_passwords() function. I am currently looking for a solution for this.
