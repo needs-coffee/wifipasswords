@@ -11,10 +11,9 @@ __pycache__/
 *.ftpconfig
 *.json
 setup.py
-test.py
 *.spec
 notes.txt
-*.ico
+nottest.py
 
 # Compild source #
 ###################

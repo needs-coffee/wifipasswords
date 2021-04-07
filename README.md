@@ -1,4 +1,6 @@
-# wifipasswords
+#<img src="icons8-flatcolor-unlock.ico" height="40"> wifipasswords
+
+![PyPI](https://img.shields.io/pypi/v/wifipasswords) ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/needs-coffee/wifipasswords?include_prereleases) ![GitHub](https://img.shields.io/github/license/needs-coffee/wifipasswords) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/wifipasswords) [![Downloads](https://pepy.tech/badge/wifipasswords)](https://pepy.tech/project/wifipasswords)
 
 Retrieve and save all WiFi networks and passwords on the device.  
 On windows uses the netsh subprocess.  
@@ -73,7 +75,7 @@ To-Do
 - [ ] Improve mac authentication methods
 - [X] Add getters for accessing variables directly
 - [X] Fix visible network, DNS config and number of interfaces for Linux
-- [ ] Add automated tests
+- [X] Add automated tests
 - [X] Add method to check and return only the connected SSID name and Password
 - [X] Use nmcli to retrieve passwords on linux rather than reading files (may not require sudo) 
 - [X] Multithreading support for windows to imporove execution speed
