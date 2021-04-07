@@ -1,4 +1,4 @@
-#<img src="icons8-flatcolor-unlock.ico" height="40"> wifipasswords
+#wifipasswords
 
 ![PyPI](https://img.shields.io/pypi/v/wifipasswords) ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/needs-coffee/wifipasswords?include_prereleases) ![GitHub](https://img.shields.io/github/license/needs-coffee/wifipasswords) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/wifipasswords) [![Downloads](https://pepy.tech/badge/wifipasswords)](https://pepy.tech/project/wifipasswords)
 

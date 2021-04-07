@@ -13,6 +13,7 @@ __pycache__/
 setup.py
 *.spec
 notes.txt
+*.ico
 nottest.py
 
 # Compild source #
