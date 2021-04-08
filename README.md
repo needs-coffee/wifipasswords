@@ -72,7 +72,7 @@ The wifipasswords_exe.py file is the same as the __main__.py file in the package
 To-Do
 -----
 - [X] Add macOS Support
-- [ ] Improve mac authentication methods
+- [ ] Improve macOS authentication methods
 - [X] Add getters for accessing variables directly
 - [X] Fix visible network, DNS config and number of interfaces for Linux
 - [X] Add automated tests
