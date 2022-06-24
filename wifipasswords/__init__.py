@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """ wifipasswords.py
-    Retreive and save all wifi networks and passwords on the device.
+    Retrieve and save all wifi networks and passwords on the device.
     On Windows uses netsh module.
-    On Linux reads NetworkManager files or wpa_supplicant files. 
+    On Linux reads NetworkManager files or wpa_supplicant files.
     MacOS to be implemented.
     Uses the netsh windows module. Pass --JSON argument to export as JSON.
     Pass --wpasupplicant to create a wpa_supplicant.conf file for linux
     Creation date: 10-02-2019
-    Modified date: 30-03-2021
-    Dependencies: colorama
 """
 __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
+
 # This program is free software: you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,10 +24,11 @@ __copyright__ = "Copyright (C) 2019-2021 Joe Campbell"
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see < https: // www.gnu.org/licenses/>.
 
-__version__ = "0.4.0-beta"
+__version__ = "0.4.1-beta"
 __licence__ = "GPLv3"  # GNU General Public Licence v3
 
 import platform
+
 
 class WifiPasswords:
     """
@@ -39,16 +39,19 @@ class WifiPasswords:
     def __init__(self) -> None:
         self.platform = platform.system()
 
-        if self.platform == 'Windows':
+        if self.platform == "Windows":
             from .wifipasswords_windows import WifiPasswordsWindows as _PlatformClass
+
             self._WifiPasswordsSubclass = _PlatformClass()
-        elif self.platform == 'Linux':
+        elif self.platform == "Linux":
             from .wifipasswords_linux import WifiPasswordsLinux as _PlatformClass
+
             self._WifiPasswordsSubclass = _PlatformClass()
-        elif self.platform == 'Darwin':
+        elif self.platform == "Darwin":
             from .wifipasswords_macos import WifiPasswordsMacos as _PlatformClass
+
             self._WifiPasswordsSubclass = _PlatformClass()
-        elif self.platform == 'Java':
+        elif self.platform == "Java":
             raise NotImplementedError
         else:
             raise NotImplementedError
@@ -59,7 +62,6 @@ class WifiPasswords:
         Returns the stored data value as a dictionary. \n
         """
         return self._WifiPasswordsSubclass.data
-    
 
     @property
     def number_of_profiles(self) -> int:
@@ -67,7 +69,6 @@ class WifiPasswords:
         Returns the number of saved profiles as an int. \n
         """
         return self._WifiPasswordsSubclass.number_of_profiles
-    
 
     @property
     def number_of_visible_networks(self) -> int:
@@ -75,15 +76,13 @@ class WifiPasswords:
         Returns the stored data value as a dictionary. \n
         """
         return self._WifiPasswordsSubclass.number_visible_networks
-    
-    
+
     @property
     def number_of_interfaces(self) -> int:
         """
         Returns the number of network interfaces. \n
         """
         return self._WifiPasswordsSubclass.number_visible_networks
-    
 
     def get_passwords(self) -> dict:
         """
@@ -94,7 +93,6 @@ class WifiPasswords:
         """
         return self._WifiPasswordsSubclass.get_passwords()
 
-
     def get_passwords_dummy(self, delay: float = 0.5, quantity: int = 10) -> dict:
         """
         Returns a dictionary of dummy networks for testing.\n
@@ -102,8 +100,7 @@ class WifiPasswords:
         - delay: seconds of delay before returning. emulating netsh.\n
         - quantity: how many networks, half open, half wpa\n
         """
-        return self._WifiPasswordsSubclass.get_passwords_dummy(delay,quantity)
-
+        return self._WifiPasswordsSubclass.get_passwords_dummy(delay, quantity)
 
     def get_passwords_data(self) -> dict:
         """
@@ -111,7 +108,6 @@ class WifiPasswords:
         needs to be run after get_passwords or will return empty dict.
         """
         return self._WifiPasswordsSubclass.data
-
 
     def get_visible_networks(self, as_dictionary=False) -> str:
         """
@@ -122,7 +118,6 @@ class WifiPasswords:
         - as_dictionary: if true, returns nested dictionary of dns config, false returns str.\n
         """
         return self._WifiPasswordsSubclass.get_visible_networks(as_dictionary)
-
 
     def get_dns_config(self, as_dictionary=False) -> str:
         """
@@ -136,9 +131,9 @@ class WifiPasswords:
         """
         return self._WifiPasswordsSubclass.get_dns_config(as_dictionary)
 
-
-    def save_wpa_supplicant(self, path: str, data: dict = None, include_open: bool = True,
-                            locale: str = 'GB') -> None:
+    def save_wpa_supplicant(
+        self, path: str, data: dict = None, include_open: bool = True, locale: str = "GB"
+    ) -> None:
         """
         Saves formatted wpa_supplicant.conf file\n
         For use on linux systems to configure wifi\n
@@ -148,8 +143,7 @@ class WifiPasswords:
         - include open - select whether open networks in dictionary will be output.\n
         - locale - ISO country code to add to wpa_supplicant. Should be country of use.
         """
-        self._WifiPasswordsSubclass.save_wpa_supplicant(path,data,include_open,locale)
-
+        self._WifiPasswordsSubclass.save_wpa_supplicant(path, data, include_open, locale)
 
     def save_json(self, path: str, data: dict = None) -> None:
         """
@@ -158,8 +152,7 @@ class WifiPasswords:
         - path - must be specified. Full path including filename.
         - data - dictionary, defaults to self.data
         """
-        self._WifiPasswordsSubclass.save_json(path,data)
-
+        self._WifiPasswordsSubclass.save_json(path, data)
 
     def get_number_visible_networks(self) -> int:
         """
@@ -168,13 +161,11 @@ class WifiPasswords:
         """
         return self._WifiPasswordsSubclass.get_number_visible_networks()
 
-
     def get_number_interfaces(self) -> int:
         """
         returns number of interfaces, calculated from number of DNS configs.\n
         """
         return self._WifiPasswordsSubclass.get_number_interfaces()
-
 
     def get_number_profiles(self) -> int:
         """
@@ -182,7 +173,6 @@ class WifiPasswords:
         calls get_passwords if number of profiles is 0.\n
         """
         return self._WifiPasswordsSubclass.get_number_profiles()
-
 
     def get_currently_connected_ssids(self) -> list:
         """
@@ -192,22 +182,19 @@ class WifiPasswords:
         """
         return self._WifiPasswordsSubclass.get_currently_connected_ssids()
 
-    
     def get_currently_connected_passwords(self) -> list:
         """
         Returns a tuple of (ssid, psk) for each currently connected network as a list.
         """
         return self._WifiPasswordsSubclass.get_currently_connected_passwords()
 
-
     def get_known_ssids(self) -> list:
         """
-        Returns a list of known SSIDs without password information. 
+        Returns a list of known SSIDs without password information.
         """
         return self._WifiPasswordsSubclass.get_known_ssids()
 
-
-    def get_single_password(self,ssid) -> str:
+    def get_single_password(self, ssid) -> str:
         """
         Returns the psk for the specified SSID.\n
         If the SSID is open, returns None. \n

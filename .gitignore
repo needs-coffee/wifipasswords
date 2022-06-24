@@ -10,11 +10,11 @@ __pycache__/
 .vscode/
 *.ftpconfig
 *.json
-setup.py
 *.spec
 notes.txt
 *.ico
 nottest.py
+Todo.md
 
 # Compild source #
 ###################
@@ -154,7 +154,7 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+.venv*
 env/
 venv/
 ENV/

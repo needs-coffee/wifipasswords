@@ -1,0 +1,4 @@
+colorama>=0.4.4
+black>=22
+flake8>=4.0
+build>=0.8
