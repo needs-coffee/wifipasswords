@@ -70,6 +70,11 @@ Can be packaged to an EXE on windows with:
 The wifipasswords_exe.py file is the same as the __main__.py file in the package except will pause after console output is finished to prevent the terminal from auto-closing if the EXE is run directly.
 
 
+Testing
+-------
+Test locally with `pytest -v ./tests`
+Currently github test runners do not have nmcli interface to access wifi data so test locally. 
+
 About
 -----
 Creation date: 10-02-2019  

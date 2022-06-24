@@ -3,9 +3,6 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", "r") as f:
-    required = f.read().splitlines()
-
 with open("wifipasswords/__init__.py", "r") as f:
     for line in f:
         if line.startswith("__version__"):
@@ -34,7 +31,7 @@ setuptools.setup(
         "Topic :: System :: Networking",
     ],
     packages=["wifipasswords"],
-    install_requires=required,
+    install_requires=["colorama>=0.4.4"],
     licence="GPLv3",
     keywords=["wifipasswords", "passwords", "wifi", "networks", "dns", "wpasupplicant"],
     python_requires=">=3.6",
